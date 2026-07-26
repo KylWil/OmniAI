@@ -3,6 +3,7 @@
 Examples/
 FightingICE/
 .venv/
+practice_files/
 
 # Files
-test.py
+conftest.py
