@@ -63,7 +63,4 @@ class OmniAI(AIInterface):
         log.info("End of Game")
 
     def close(self):
-        """
-        Runs at the end of AIController run loop
-        """
         pass
