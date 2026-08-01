@@ -24,6 +24,7 @@ class OmniAI(AIInterface):
         self.dc = DataCenter()
         self.key = Key()
         self.player_num = player_number
+        log.info("Saving Data: %s", self.savedata)
 
     def get_non_delay_frame_data(self, frame_data: FrameData):
         self.nd_frame_data = frame_data
@@ -43,7 +44,8 @@ class OmniAI(AIInterface):
         if self.frame_data.empty_flag or self.frame_data.current_frame_number <= 0:
             return
 
-        self.dc.add_char_data(char_data = self.frame_data.get_character(True))
+        if self.savedata:
+            self.dc.add_char_data(char_data = self.frame_data.get_character(True))
 
         if self.cc.get_skill_flag():
             self.key = self.cc.get_skill_key()
@@ -63,6 +65,10 @@ class OmniAI(AIInterface):
 
     def round_end(self, round_result: RoundResult):
         log.info("End of Round: %s", round_result)
+
+        if self.savedata:
+            date = self.dc.export_data()
+            log.info("Successfully saved data for round on: %s", date)
 
     def game_end(self):
         log.info("End of Game")

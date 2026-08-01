@@ -1,5 +1,6 @@
 import datetime
 import os
+import pandas as pd
 from pyftg.models.character_data import CharacterData
 
 class DataCenter():
@@ -13,11 +14,23 @@ class DataCenter():
         """
         Exports class attributes to local data file.
         """
-        now = datetime.datetime.now().replace(microsecond=0)
-        date = now.date()
-        time = now.time()
+        now = datetime.datetime.now()
+        file_prefix = now.strftime("%Y-%m-%d_%H-%M-%S")
 
-        file_prefix = str(date) + "_" + str(time)
+        folder_path = os.path.join("reports", file_prefix)
+        os.makedirs(folder_path, exist_ok=True)
 
-        os.makedirs("reports", exist_ok=True)
-        os.makedirs(os.path.join("reports", file_prefix))
+        file_name = f"{file_prefix}.csv"
+        full_output_path = os.path.join(folder_path, file_name)
+
+        df = pd.DataFrame(self.char_history)
+        df.drop(columns=['attack_data', 'projectile_attack'], inplace=True)
+        df.to_csv(full_output_path, index=False, encoding="utf-8")
+
+        self.flush_data()
+
+        return file_prefix
+
+    def flush_data(self):
+        self.char_history = []
+
