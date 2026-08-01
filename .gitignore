@@ -4,6 +4,8 @@ Examples/
 FightingICE/
 .venv/
 practice_files/
+reports/
 
 # Files
 conftest.py
+class_testing_ground.py

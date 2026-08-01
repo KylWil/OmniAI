@@ -6,9 +6,10 @@ import random
 log = logging.getLogger(__name__)
 
 class OmniAI(AIInterface):
-    def __init__(self):
+    def __init__(self, savedata):
         super().__init__()
         self.blind = True
+        self.savedata = savedata
 
     def name(self) -> str:
         return self.__class__.__name__

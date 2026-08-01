@@ -22,12 +22,12 @@ def play(host: Annotated[Optional[str], typer.Option(help="DareFightingICE Host"
         port: Annotated[Optional[int], typer.Option(help="DareFightingICE Port")] = 31415,
         a1: Annotated[Optional[str], typer.Option(help="Player 1 AI")] = None,
         a2: Annotated[Optional[str], typer.Option(help="Player 2 AI")] = None,
-        visual: Annotated[Optional[bool], typer.Option(help="Collect and Save Round Data")] = False,
+        savedata: Annotated[Optional[bool], typer.Option(help="Collect and Save Round Data")] = False,
         games: Annotated[Optional[int], typer.Option(help="Number of Rounds")] = 1):
     """
     Play cycle entry. Uses neural network for action but does not calculate error or update policy.
     """
-    asyncio.run(run_fight(a1, a2, games))
+    asyncio.run(run_fight(a1, a2, games, savedata))
 
 if __name__ == '__main__':
     set_logging(log_level=DEBUG)
