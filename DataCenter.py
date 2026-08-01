@@ -1,12 +1,13 @@
 import datetime
 import os
+from pyftg.models.character_data import CharacterData
 
 class DataCenter():
     def __init__(self):
-        self.action_history = []
+        self.char_history = []
 
-    def add_action(self, action: str):
-        self.action_history.append(action)
+    def add_char_data(self, char_data: CharacterData):
+        self.char_history.append(char_data)
 
     def export_data(self):
         """

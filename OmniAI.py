@@ -1,5 +1,6 @@
 from pyftg import (AIInterface, GameData, FrameData, ScreenData, 
-                   AudioData, Key, RoundResult, CommandCenter)
+                   AudioData, Key, RoundResult, CommandCenter,)
+from DataCenter import DataCenter
 import logging
 import random
 
@@ -20,6 +21,7 @@ class OmniAI(AIInterface):
     def initialize(self, game_data: GameData, player_number: bool):
         log.info("%s Starting..", self.name())
         self.cc = CommandCenter()
+        self.dc = DataCenter()
         self.key = Key()
         self.player_num = player_number
 
@@ -40,6 +42,8 @@ class OmniAI(AIInterface):
     def processing(self):
         if self.frame_data.empty_flag or self.frame_data.current_frame_number <= 0:
             return
+
+        self.dc.add_char_data(char_data = self.frame_data.get_character(True))
 
         if self.cc.get_skill_flag():
             self.key = self.cc.get_skill_key()
