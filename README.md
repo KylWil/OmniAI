@@ -31,9 +31,21 @@ OmniAI is a training environment for the game DareFightingICE. It offers a Proxi
 3. Install the above Python packages to the virtual environment
 4. Download and extract DareFightingICE-7.1.zip
 5. Download resource-7.1.zip and move the data folder into ~/DareFightingICE-7.1./FightingICE7.1. The moved data folder should be in the same folder as run-linux-amd64.sh
+6. Download OmniAI
 
-### Executing program
+## Executing program
 
+### Playing the trained AI
+
+1. Navigate to your DareFightingICE folder and run the .sh file associated with your operating system, i.e. "run-linux-amd64.sh"
+2. Navigate the terminal to your OmniAI folder
+3. Activate your Python v3.12.13 virtual environment in a terminal
+4. Run "python3 main.py play --a1 OmniAI" without the quotes
+5. Return to the DareFightingICE window and navigate to "FIGHT" using the arrow keys and select it with "Z"
+6. Using the arrow keys, ensure Player 1 is set to OmniAI, Player 2 is set to MctsAi23i**, and Character 1 is set to GARNET.
+7. Select PLAY to begin the match.
+
+\*\* Advanced users can select different AI by utilizing different launch parameters.
 
 ## Help
 
