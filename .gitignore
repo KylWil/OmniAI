@@ -5,6 +5,8 @@ FightingICE/
 .venv/
 practice_files/
 reports/
+__pycache__/
+.pytest_cache/
 
 # Files
 conftest.py
