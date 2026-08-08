@@ -22,6 +22,7 @@ class OmniAI(AIInterface):
         log.info("%s Starting..", self.name())
         self.cc = CommandCenter()
         self.dc = DataCenter()
+        self.game_data = game_data
         self.key = Key()
         self.player_num = player_number
         log.info("Saving Data: %s", self.savedata)
