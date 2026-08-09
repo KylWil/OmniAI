@@ -24,7 +24,7 @@ class DataCenter():
         full_output_path = os.path.join(folder_path, file_name)
 
         df = pd.DataFrame(self.char_history)
-        df.drop(columns=['projectile_attack'], inplace=True)
+        # df.drop(columns=['attack_data', 'projectile_attack'], inplace=True)
         df.to_csv(full_output_path, index=False, encoding="utf-8")
 
         self.flush_data()

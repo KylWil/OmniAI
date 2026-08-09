@@ -6,7 +6,6 @@ CHAR_PARAMS = [
     ("speed_x", "minmax", {"minval":-40, "maxval":40}),
     ("speed_y", "minmax", {"minval":-40, "maxval":40}),
     ("state", "onehot", {"num_classes":4}),
-    ("action", "onehot", {"num_classes":8}),
     ("front", "bool", {}),
     ("control", "bool", {}),
     ("remaining_frame", "minmax", {"minval":0, "maxval":100}),
@@ -20,7 +19,7 @@ ATTACK_PARAMS = [
     ("impact_x", "minmax", {"minval":0, "maxval":20}),
     ("impact_y", "minmax", {"minval":-10, "maxval":0}),
     ("give_guard_recov", "minmax", {"minval":0, "maxval":18}),
-    ("attack_type", "onehot", {"num_classes":4}),
+    ("attack_type", "onehot", {"num_classes":5}),
     ("down_prop", "bool", {}),
     ("is_projectile", "bool", {}),
     ("is_live", "bool", {}),
@@ -35,5 +34,8 @@ HIT_AREA_PARAMS = [
 
 GAME_PARAMS = [
     ("current_frame_number", "minmax", {"minval":0, "maxval":3600}),
-    ("current_round", "onehot", {"num_classes":3}),
+]
+
+CUSTOM_PARAMS = [
+    ("action", "onehot", {"num_classes":8}),
 ]
