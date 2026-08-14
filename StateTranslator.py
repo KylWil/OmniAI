@@ -1,6 +1,6 @@
 from pyftg import (FrameData, GameData)
 from pyftg.models.character_data import CharacterData
-import parameters as param
+from src.vars import parameters as param
 import torch
 
 class StateTranslator():
@@ -34,6 +34,8 @@ class StateTranslator():
         self.state_array.extend(params)
 
     def process(self):
+        # Do not change order or content of normalization if you intend to continue training of an existing model.
+
         # Character 1 State
         attack_dict = self.char1_data["attack_data"]
         self._normalize_data(self.char1_data, param.CHAR_PARAMS)
