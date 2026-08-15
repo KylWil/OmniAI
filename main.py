@@ -2,7 +2,7 @@ import asyncio
 import typer
 from typing_extensions import Annotated, Optional
 from pyftg.utils.logging import DEBUG, set_logging
-from play import run_fight
+from src.files.play import run_fight
 
 app = typer.Typer()
 

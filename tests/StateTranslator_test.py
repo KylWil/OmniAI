@@ -1,4 +1,4 @@
-from StateTranslator import StateTranslator
+from src.files.StateTranslator import StateTranslator
 
 from pyftg.models.hit_area import HitArea
 from pyftg.models.attack_data import AttackData
@@ -90,3 +90,4 @@ test_translation.process()
 final_state = test_translation.to_tensor()
 
 print(final_state)
+print(len(final_state))
