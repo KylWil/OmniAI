@@ -29,4 +29,3 @@ async def run_learn(
         logger.info("resumed from %s", resume)
 
     ppo = PPO(agent, cfg)
-    buffer = RolloutBuffer(cfg)
