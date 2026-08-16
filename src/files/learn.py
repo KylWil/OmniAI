@@ -6,6 +6,7 @@ from src.vars.actions import ACTION_TABLE
 from src.model.ActorCritic import ActorCritic
 import torch
 import logging
+from src.model.PPO import PPO
 
 logger = logging.getLogger(__name__)
 
@@ -28,3 +29,4 @@ async def run_learn(
         logger.info("resumed from %s", resume)
 
     ppo = PPO(agent, cfg)
+    buffer = RolloutBuffer(cfg)
