@@ -1,14 +1,10 @@
-from pyftg import (FrameData, GameData)
-from pyftg.models.character_data import CharacterData
+from pyftg import FrameData
 from src.vars import parameters as param
 import torch
 
-class StateTranslator():
-    def __init__(self, frame_data: FrameData):
-        self.char1_data = frame_data.character_data[0].to_dict()
-        self.char2_data = frame_data.character_data[1].to_dict()
-        self.frame_data = frame_data.to_dict()
-        self.state_array = []
+class StateEncoder():
+    def __init__(self, state_dim):
+        self.state_dim = state_dim
 
     def _norm_minmax(self, value, minval, maxval):
         return (value - minval) / (maxval - minval)
@@ -33,6 +29,12 @@ class StateTranslator():
                 params.extend(self._norm_onehot(value, **kwargs))
         self.state_array.extend(params)
 
+    def load(self, frame_data: FrameData):
+        self.char1_data = frame_data.character_data[0].to_dict()
+        self.char2_data = frame_data.character_data[1].to_dict()
+        self.frame_data = frame_data.to_dict()
+        self.state_array = []
+
     def process(self):
         # Do not change order or content of normalization if you intend to continue training of an existing model.
 
@@ -53,4 +55,7 @@ class StateTranslator():
 
     def to_tensor(self):
         return torch.tensor(self.state_array, dtype=torch.float32)
+
+    def get_state_dim(self):
+        return self.state_dim
     

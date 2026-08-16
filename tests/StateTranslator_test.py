@@ -1,4 +1,4 @@
-from src.files.StateTranslator import StateTranslator
+from files.StateEncoder import StateEncoder
 
 from pyftg.models.hit_area import HitArea
 from pyftg.models.attack_data import AttackData
@@ -85,7 +85,7 @@ frame_dummy = FrameData.from_dict(
     }
 )
 
-test_translation = StateTranslator(frame_data=frame_dummy)
+test_translation = StateEncoder(frame_data=frame_dummy)
 test_translation.process()
 final_state = test_translation.to_tensor()
 
