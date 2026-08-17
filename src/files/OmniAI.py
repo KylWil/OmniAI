@@ -7,6 +7,14 @@ import random
 log = logging.getLogger(__name__)
 
 class OmniAI(AIInterface):
+    """
+    Primary bridge between DareFightingICE client and learning environment.
+    Called by pyftg's Gateway class every frame to get updated state information and
+    deliver a response.
+
+    Args:
+    AIInterface: Interface class being inherited from pyftg
+    """
     def __init__(self, savedata):
         super().__init__()
         self.blind = True

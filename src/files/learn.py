@@ -15,6 +15,15 @@ async def run_learn(
         a2: str,
         agent_path: str,
         resume: str,):
+    """
+    Initiates learning session.
+
+    Args:
+    a1: Name of player 1 agent
+    a2: Name of player 2 agent
+    agent_path: Directory to save agent checkpoint
+    resume: Name of agent to resume training
+    """
     
     cfg = Config()
     Path(agent_path).mkdir(parents=True, exist_ok=True)

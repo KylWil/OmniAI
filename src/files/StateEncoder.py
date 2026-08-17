@@ -3,6 +3,12 @@ from src.vars import parameters as param
 import torch
 
 class StateEncoder():
+    """
+    Encodes state values from a frame. Values controlled by parameters.py
+    file variables. Flat values are normalized on a 0 to 1 scale. 
+    Boolean values are normalized to 0 and 1. Categorical values are
+    appended as a binary list with at most one 1 value.
+    """
     def __init__(self, state_dim):
         self.state_dim = state_dim
 
@@ -36,6 +42,10 @@ class StateEncoder():
         self.state_array = []
 
     def process(self):
+        """
+        Normalizes the game state values. Changing the order or content of this class
+        WILL disable training of an existing model. Updates should be only made for new models.
+        """
         # Do not change order or content of normalization if you intend to continue training of an existing model.
 
         # Character 1 State

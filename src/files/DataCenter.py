@@ -4,10 +4,19 @@ import pandas as pd
 from pyftg.models.character_data import CharacterData
 
 class DataCenter():
+    """
+    Export class that transforms CharacterData information into a CSV.
+    """
     def __init__(self):
         self.char_history = []
 
     def add_char_data(self, char_data: CharacterData):
+        """
+        Appends char_data to class attribute list.
+
+        Args:
+        char_data: CharacterData class instance
+        """
         self.char_history.append(char_data)
 
     def export_data(self):
@@ -31,6 +40,6 @@ class DataCenter():
 
         return file_prefix
 
-    def flush_data(self):
+    def _flush_data(self):
         self.char_history = []
 
