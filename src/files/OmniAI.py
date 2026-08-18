@@ -1,6 +1,7 @@
 from pyftg import (AIInterface, GameData, FrameData, ScreenData, 
                    AudioData, Key, RoundResult, CommandCenter,)
 from src.files.DataCenter import DataCenter
+from src.vars.actions import ACTIONS
 import logging
 import random
 
@@ -15,10 +16,11 @@ class OmniAI(AIInterface):
     Args:
     AIInterface: Interface class being inherited from pyftg
     """
-    def __init__(self, savedata):
+    def __init__(self, savedata, randomaction):
         super().__init__()
         self.blind = True
         self.savedata = savedata
+        self.randomaction = randomaction
 
     def name(self) -> str:
         return self.__class__.__name__
@@ -62,12 +64,10 @@ class OmniAI(AIInterface):
             self.key.empty()
             self.cc.skill_cancel()
 
-            rand = random.uniform(0, 1)
-
-            if (rand < 0.5):
-                self.cc.command_call("B")
+            if (self.randomaction):
+                self.cc.command_call(random.choice(ACTIONS))
             else:
-                self.cc.command_call("JUMP")
+                self.cc.command_call("B")
 
     def input(self) -> Key:
         return self.key

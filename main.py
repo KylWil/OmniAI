@@ -20,14 +20,15 @@ def learn(
 
 @app.command()
 def play(
-        a1: Annotated[Optional[str], typer.Option(help="Player 1 AI")] = None,
-        a2: Annotated[Optional[str], typer.Option(help="Player 2 AI")] = None,
+        a1: Annotated[Optional[str], typer.Option(help="Player 1 AI")] = "OmniAI",
+        a2: Annotated[Optional[str], typer.Option(help="Player 2 AI")] = "MctsAi23i",
         savedata: Annotated[Optional[bool], typer.Option(help="Collect and Save Round Data")] = False,
-        games: Annotated[Optional[int], typer.Option(help="Number of Rounds")] = 1):
+        games: Annotated[Optional[int], typer.Option(help="Number of Rounds")] = 1,
+        randomaction: Annotated[Optional[bool], typer.Option(help="Sets a1 to perform randomized actions")] = False):
     """
     Play cycle entry. Uses neural network for action but does not calculate error or update policy.
     """
-    asyncio.run(run_fight(a1, a2, games, savedata))
+    asyncio.run(run_fight(a1, a2, games, savedata, randomaction))
 
 if __name__ == '__main__':
     set_logging(log_level=DEBUG)

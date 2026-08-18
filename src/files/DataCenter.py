@@ -36,7 +36,7 @@ class DataCenter():
         # df.drop(columns=['attack_data', 'projectile_attack'], inplace=True)
         df.to_csv(full_output_path, index=False, encoding="utf-8")
 
-        self.flush_data()
+        self._flush_data()
 
         return file_prefix
 
