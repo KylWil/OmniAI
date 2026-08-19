@@ -32,7 +32,7 @@ OmniAI is a training environment for the game DareFightingICE. It offers a Proxi
 4. Download and extract DareFightingICE-7.1.zip
 5. Download resource-7.1.zip and move the data folder into ~/DareFightingICE-7.1./FightingICE7.1. The moved data folder should be in the same folder as run-linux-amd64.sh
 6. Download OmniAI
-7. Move linux-play.sh from the OmniAI repository into the same folder as run-linux-amd64.sh
+7. Move linux-play.sh from the OmniAI repository into the same DareFightingICE folder as run-linux-amd64.sh
 
 ## Executing program
 
