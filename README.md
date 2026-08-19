@@ -42,9 +42,9 @@ OmniAI is a training environment for the game DareFightingICE. It offers a Proxi
 2. Run linux-play.sh
 3. Open a terminal and navigate to your OmniAI folder
 4. Activate your Python v3.12.13 virtual environment
-5*. Run "python3 main.py play --randomaction" without the quotes
+5. Run "python3 main.py play --randomaction" without the quotes\*\*
 
-*Optional tags include:
+\*Optional tags include:
 * --randomaction: Chooses a random action every frame. AI will repeatedly kick otherwise.
 * --savedata: Saves a csv of frame-by-frame character data to /OmniAI/reports/ each round.
 ## Help
