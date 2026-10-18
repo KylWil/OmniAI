@@ -16,11 +16,13 @@ class OmniAI(AIInterface):
     Args:
     AIInterface: Interface class being inherited from pyftg
     """
-    def __init__(self, savedata, randomaction):
+    def __init__(self, savedata, randomaction, ac_net, encoder):
         super().__init__()
         self.blind = True
         self.savedata = savedata
         self.randomaction = randomaction
+        self.ac_net = ac_net
+        self.encoder = encoder
 
     def name(self) -> str:
         return self.__class__.__name__
@@ -58,16 +60,19 @@ class OmniAI(AIInterface):
         if self.savedata:
             self.dc.add_char_data(char_data = self.frame_data.get_character(True))
 
+        self.encoder.load(self.frame_data)
+        self.encoder.process()
+        state = self.encoder.to_tensor()
+
         if self.cc.get_skill_flag():
             self.key = self.cc.get_skill_key()
         else:
             self.key.empty()
             self.cc.skill_cancel()
 
-            if (self.randomaction):
-                self.cc.command_call(random.choice(ACTIONS))
-            else:
-                self.cc.command_call("B")
+            index, _, _ = self.ac_net.act(state=state)
+
+            self.cc.command_call(ACTIONS[index])
 
     def input(self) -> Key:
         return self.key

@@ -2,7 +2,7 @@ from src.vars.config import Config
 from pathlib import Path
 from src.files.StateEncoder import StateEncoder
 from src.vars.dimensions import STATE_DIM
-from src.vars.actions import ACTION_TABLE
+from src.vars.actions import ACTIONS
 from src.model.ActorCritic import ActorCritic
 import torch
 import logging
@@ -29,8 +29,8 @@ async def run_learn(
     Path(agent_path).mkdir(parents=True, exist_ok=True)
 
     encoder = StateEncoder(STATE_DIM)
-    state_dim = encoder.get_state_dim
-    n_actions = len(ACTION_TABLE)
+    state_dim = encoder.get_state_dim()
+    n_actions = len(ACTIONS)
 
     agent = ActorCritic(state_dim, n_actions)
     if resume:
