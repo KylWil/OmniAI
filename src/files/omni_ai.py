@@ -1,6 +1,6 @@
 from pyftg import (AIInterface, GameData, FrameData, ScreenData, 
                    AudioData, Key, RoundResult, CommandCenter,)
-from src.files.DataCenter import DataCenter
+from files.data_center import DataCenter
 from src.vars.actions import ACTIONS
 import logging
 import random

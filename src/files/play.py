@@ -1,4 +1,4 @@
-from src.files.OmniAI import OmniAI
+from files.omni_ai import OmniAI
 from pyftg.socket.aio.gateway import Gateway
 import os
 
