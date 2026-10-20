@@ -1,8 +1,17 @@
-from files.omni_ai import OmniAI
+from src.files.omni_ai import OmniAI
 from pyftg.socket.aio.gateway import Gateway
 import os
+import torch
+from src.files.encoder import StateEncoder
+from src.model.actor_critic import ActorCritic
+from src.vars.dimensions import ACTION_DIM
+from src.vars.dimensions import STATE_DIM
+from src.files.checkpoint import CheckpointManager
+import logging
 
-async def run_fight(p1: str, p2: str, game_num: int, savedata: bool, randomaction: bool):
+log = logging.getLogger(__name__)
+
+async def run_fight(p1: str, p2: str, game_num: int, savedata: bool, randomaction: bool, cuda=True):
     """
     Builds connection and gameplay information and runs a match.
     Requires DareFightingICE to be ran in pyftg mode.
@@ -17,6 +26,18 @@ async def run_fight(p1: str, p2: str, game_num: int, savedata: bool, randomactio
     host = os.environ.get("SERVER_HOST", "127.0.0.1")
     port = 31415
     gateway = Gateway(host, port)
-    omni_ai = OmniAI(savedata, randomaction)
+
+    device = torch.device('cuda' if torch.cuda.is_available() and cuda else 'cpu')
+    encoder = StateEncoder()
+    network = ActorCritic(STATE_DIM, ACTION_DIM, device)
+    checkpoint_manager = CheckpointManager(p1)
+    checkpoint = checkpoint_manager.load_latest_checkpoint(device)
+
+    if checkpoint is not None: network.load_state_dict(checkpoint["model"])
+    else: log.info("Failed to load checkpoint. Playing with untrained network.")
+
+
+    omni_ai = OmniAI(savedata, randomaction, network, encoder)
+
     gateway.register_ai(p1, omni_ai)
     await gateway.run_game([character, character], [p1, p2], game_number=game_num)

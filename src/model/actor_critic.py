@@ -3,7 +3,7 @@ import torch
 from torch.distributions import Categorical
 
 class ActorCritic(nn.Module):
-    def __init__(self, state_dim: int, n_actions: int, hidden: int = 256):
+    def __init__(self, state_dim: int, n_actions: int, device, hidden: int = 256):
         super().__init__()
         self.trunk = nn.Sequential(
             nn.Linear(state_dim, hidden), nn.Tanh(),
@@ -11,6 +11,8 @@ class ActorCritic(nn.Module):
         )
         self.actor = nn.Linear(hidden, n_actions)
         self.critic = nn.Linear(hidden, 1)
+        self.device = device
+        self.to(device)
 
     def forward(self, x: torch.Tensor):
         h = self.trunk(x)
@@ -20,7 +22,7 @@ class ActorCritic(nn.Module):
 
     @torch.no_grad()
     def act(self, state, deterministic: bool = False):
-        x = torch.as_tensor(state, dtype=torch.float32).unsqueeze(0)
+        x = torch.as_tensor(state, dtype=torch.float32, device=self.device).unsqueeze(0)
         logits, value = self.forward(x)
         dist = Categorical(logits=logits)
         action = logits.argmax(dim=-1) if deterministic else dist.sample()
@@ -29,7 +31,7 @@ class ActorCritic(nn.Module):
 
     @torch.no_grad()
     def critic_value(self, state):
-        x = torch.as_tensor(state, dtype=torch.float32).unsqueeze(0)
+        x = torch.as_tensor(state, dtype=torch.float32, device=self.device).unsqueeze(0)
         nil, value = self.forward(x)
         return value.squeeze(0)
 

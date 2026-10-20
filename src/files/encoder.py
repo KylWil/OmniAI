@@ -9,8 +9,8 @@ class StateEncoder():
     Boolean values are normalized to 0 and 1. Categorical values are
     appended as a binary list with at most one 1 value.
     """
-    def __init__(self, state_dim):
-        self.state_dim = state_dim
+    def __init__(self):
+        pass
 
     def _norm_minmax(self, value, minval, maxval):
         return (value - minval) / (maxval - minval)
@@ -65,7 +65,4 @@ class StateEncoder():
 
     def to_tensor(self):
         return torch.tensor(self.state_array, dtype=torch.float32)
-
-    def get_state_dim(self):
-        return self.state_dim
     

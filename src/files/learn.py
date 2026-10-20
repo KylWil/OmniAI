@@ -1,12 +1,12 @@
 from src.vars.config import Config
 from pathlib import Path
-from files.encoder import StateEncoder
+from src.files.encoder import StateEncoder
 from src.vars.dimensions import STATE_DIM
 from src.vars.actions import ACTIONS
-from model.actor_critic import ActorCritic
+from src.model.actor_critic import ActorCritic
 import torch
 import logging
-from model.ppo import PPO
+from src.model.ppo import PPO
 
 logger = logging.getLogger(__name__)
 

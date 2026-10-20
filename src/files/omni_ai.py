@@ -1,9 +1,10 @@
 from pyftg import (AIInterface, GameData, FrameData, ScreenData, 
                    AudioData, Key, RoundResult, CommandCenter,)
-from files.data_center import DataCenter
+from src.files.data_center import DataCenter
 from src.vars.actions import ACTIONS
 import logging
 import random
+from src.files.rewards import Reward
 
 log = logging.getLogger(__name__)
 
@@ -16,12 +17,12 @@ class OmniAI(AIInterface):
     Args:
     AIInterface: Interface class being inherited from pyftg
     """
-    def __init__(self, savedata, randomaction, ac_net, encoder):
+    def __init__(self, savedata, randomaction, network, encoder):
         super().__init__()
         self.blind = True
         self.savedata = savedata
         self.randomaction = randomaction
-        self.ac_net = ac_net
+        self.network = network
         self.encoder = encoder
 
     def name(self) -> str:
@@ -37,6 +38,15 @@ class OmniAI(AIInterface):
         self.game_data = game_data
         self.key = Key()
         self.player_num = player_number
+
+        if player_number:
+            player_max_hp = game_data.max_hps[0]
+            opp_max_hp = game_data.max_hps[1]
+        else:
+            player_max_hp = game_data.max_hps[1]
+            opp_max_hp = game_data.max_hps[0]
+
+        self.reward = Reward(self.player_num, player_max_hp, opp_max_hp)
         log.info("Saving Data: %s", self.savedata)
 
     def get_non_delay_frame_data(self, frame_data: FrameData):
@@ -70,7 +80,10 @@ class OmniAI(AIInterface):
             self.key.empty()
             self.cc.skill_cancel()
 
-            index, _, _ = self.ac_net.act(state=state)
+            reward = self.reward.compute(self.frame_data)
+            index, _, _ = self.network.act(state=state)
+
+            #log.info("reward: %.3f", reward)
 
             self.cc.command_call(ACTIONS[index])
 
@@ -78,6 +91,7 @@ class OmniAI(AIInterface):
         return self.key
 
     def round_end(self, round_result: RoundResult):
+        self.reward.reset()
         log.info("End of Round: %s", round_result)
 
         if self.savedata:
