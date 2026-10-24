@@ -30,3 +30,29 @@ class Reward():
         dealt = (prev_opp.hp - opp.hp) / self.opp_max_hp
 
         return taken + dealt
+
+    def compute_round_end(self, round_data):
+        if self.previous_state is None:
+            return None
+
+        prev_player = self.previous_state[0]
+        prev_opp = self.previous_state[1]
+
+        player_index = 0 if self.player else 1
+        opp_index = 1 - player_index
+
+        player_hp = round_data.remaining_hps[player_index]
+        opp_hp = round_data.remaining_hps[opp_index]
+
+        taken = (player_hp - prev_player.hp) / self.player_max_hp
+        dealt = (prev_opp.hp - opp_hp) / self.opp_max_hp
+        reward = taken + dealt
+
+        if player_hp > opp_hp:
+            reward += 0.5
+        elif player_hp < opp_hp:
+            reward -= 0.5
+        else:
+            reward -= 0.05
+
+        return reward

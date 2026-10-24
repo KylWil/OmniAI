@@ -8,6 +8,7 @@ from src.vars.dimensions import ACTION_DIM
 from src.vars.dimensions import STATE_DIM
 from src.files.checkpoint import CheckpointManager
 import logging
+from src.model.buffer import RolloutBuffer
 
 log = logging.getLogger(__name__)
 
@@ -36,6 +37,8 @@ async def run_fight(p1: str, p2: str, game_num: int, savedata: bool, randomactio
     if checkpoint is not None: network.load_state_dict(checkpoint["model"])
     else: log.info("Failed to load checkpoint. Playing with untrained network.")
 
+    # Warms up GPU library to avoid action delays during play
+    network.act(torch.zeros(STATE_DIM))
 
     omni_ai = OmniAI(savedata, randomaction, network, encoder)
 
