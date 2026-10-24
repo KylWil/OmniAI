@@ -17,13 +17,14 @@ class OmniAI(AIInterface):
     Args:
     AIInterface: Interface class being inherited from pyftg
     """
-    def __init__(self, savedata, randomaction, network, encoder):
+    def __init__(self, savedata, randomaction, network, encoder, buffer=None):
         super().__init__()
         self.blind = True
         self.savedata = savedata
         self.randomaction = randomaction
         self.network = network
         self.encoder = encoder
+        self.buffer = buffer
 
     def name(self) -> str:
         return self.__class__.__name__
@@ -40,11 +41,14 @@ class OmniAI(AIInterface):
         self.player_num = player_number
 
         if player_number:
-            player_max_hp = game_data.max_hps[0]
-            opp_max_hp = game_data.max_hps[1]
+            self.player_index = 0
+            self.opp_index = 1
         else:
-            player_max_hp = game_data.max_hps[1]
-            opp_max_hp = game_data.max_hps[0]
+            self.player_index = 1
+            self.opp_index = 0
+
+        player_max_hp = game_data.max_hps[self.player_index]
+        opp_max_hp = game_data.max_hps[self.opp_index]
 
         self.reward = Reward(self.player_num, player_max_hp, opp_max_hp)
         log.info("Saving Data: %s", self.savedata)
@@ -81,9 +85,17 @@ class OmniAI(AIInterface):
             self.cc.skill_cancel()
 
             reward = self.reward.compute(self.frame_data)
-            index, _, _ = self.network.act(state=state)
 
-            #log.info("reward: %.3f", reward)
+            if self.buffer is not None and reward is not None:
+                self.buffer.set_reward(reward, False)
+
+            index, logprob, value = self.network.act(state=state)
+
+            if self.buffer is not None:
+                self.buffer.add(state, index, logprob, value)
+
+            if reward:
+                log.info("reward: %.3f", reward)
 
             self.cc.command_call(ACTIONS[index])
 
@@ -91,6 +103,11 @@ class OmniAI(AIInterface):
         return self.key
 
     def round_end(self, round_result: RoundResult):
+        round_end_reward = self.reward.compute_round_end(round_result)
+        if round_end_reward is not None:
+            if self.buffer is not None:
+                self.buffer.set_reward(round_end_reward, True)
+            log.info("Round end reward: %s", round_end_reward)
         self.reward.reset()
         log.info("End of Round: %s", round_result)
 
