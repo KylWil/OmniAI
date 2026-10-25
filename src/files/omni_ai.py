@@ -17,7 +17,7 @@ class OmniAI(AIInterface):
     Args:
     AIInterface: Interface class being inherited from pyftg
     """
-    def __init__(self, savedata, randomaction, network, encoder, buffer=None):
+    def __init__(self, savedata, randomaction, network, encoder, buffer=None, ppo=None, cfg=None):
         super().__init__()
         self.blind = True
         self.savedata = savedata
@@ -25,6 +25,8 @@ class OmniAI(AIInterface):
         self.network = network
         self.encoder = encoder
         self.buffer = buffer
+        self.ppo = ppo
+        self.cfg = cfg
 
     def name(self) -> str:
         return self.__class__.__name__
@@ -108,6 +110,10 @@ class OmniAI(AIInterface):
             if self.buffer is not None:
                 self.buffer.set_reward(round_end_reward, True)
             log.info("Round end reward: %s", round_end_reward)
+        if self.ppo is not None and len(self.buffer) > 0:
+            self.buffer.compute_gae(self.cfg.gamma, self.cfg.lam)
+            self.ppo.update(self.network, self.buffer)
+            self.buffer.clear()
         self.reward.reset()
         log.info("End of Round: %s", round_result)
 
