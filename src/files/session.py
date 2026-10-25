@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 async def run_session(
                     p1: str,
                     p2: str, 
-                    game_num: int, 
+                    games: int, 
                     savedata: bool, 
                     randomaction: bool,
                     learn: bool=False, 
@@ -56,13 +56,14 @@ async def run_session(
 
     buffer = None
     ppo = None
+    cfg = None
 
     if learn:
         cfg = Config()
         buffer = RolloutBuffer()
         ppo = PPO(network, cfg)
 
-    omni_ai = OmniAI(savedata, randomaction, network, encoder, buffer=buffer)
+    omni_ai = OmniAI(savedata, randomaction, network, encoder, buffer=buffer, ppo=ppo, cfg=cfg)
 
     gateway.register_ai(p1, omni_ai)
-    await gateway.run_game([character, character], [p1, p2], game_number=game_num)
+    await gateway.run_game([character, character], [p1, p2], game_number=games)
