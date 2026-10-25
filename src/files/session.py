@@ -8,11 +8,21 @@ from src.vars.dimensions import ACTION_DIM
 from src.vars.dimensions import STATE_DIM
 from src.files.checkpoint import CheckpointManager
 import logging
+from src.vars.config import Config
 from src.model.buffer import RolloutBuffer
+from src.model.ppo import PPO
 
 log = logging.getLogger(__name__)
 
-async def run_fight(p1: str, p2: str, game_num: int, savedata: bool, randomaction: bool, cuda=True):
+async def run_session(
+                    p1: str,
+                    p2: str, 
+                    game_num: int, 
+                    savedata: bool, 
+                    randomaction: bool,
+                    learn: bool=False, 
+                    cuda=True,
+                    character="GARNET"):
     """
     Builds connection and gameplay information and runs a match.
     Requires DareFightingICE to be ran in pyftg mode.
@@ -22,8 +32,12 @@ async def run_fight(p1: str, p2: str, game_num: int, savedata: bool, randomactio
     p2: Name of player 2 agent
     game_num: Number of matches to play
     savedata: Flag for exporting match information for player 1 to a CSV
+    randomaction: Instructs the agent to use random actions
+    learn: Flags the system to train the agent
+    cuda: Use GPU for training
+    character: Character to train the agent on
     """
-    character = "GARNET"
+
     host = os.environ.get("SERVER_HOST", "127.0.0.1")
     port = 31415
     gateway = Gateway(host, port)
@@ -35,12 +49,20 @@ async def run_fight(p1: str, p2: str, game_num: int, savedata: bool, randomactio
     checkpoint = checkpoint_manager.load_latest_checkpoint(device)
 
     if checkpoint is not None: network.load_state_dict(checkpoint["model"])
-    else: log.info("Failed to load checkpoint. Playing with untrained network.")
+    else: log.info("No checkpoint found, using untrained network.")
 
     # Warms up GPU library to avoid action delays during play
     network.act(torch.zeros(STATE_DIM))
 
-    omni_ai = OmniAI(savedata, randomaction, network, encoder)
+    buffer = None
+    ppo = None
+
+    if learn:
+        cfg = Config()
+        buffer = RolloutBuffer()
+        ppo = PPO(network, cfg)
+
+    omni_ai = OmniAI(savedata, randomaction, network, encoder, buffer=buffer)
 
     gateway.register_ai(p1, omni_ai)
     await gateway.run_game([character, character], [p1, p2], game_number=game_num)

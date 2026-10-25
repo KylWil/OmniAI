@@ -12,13 +12,12 @@ class PPO:
 
     def update(self, agent, buffer):
         for epoch in range(self.config.k_epochs):
-            for batch in buffer.get_minibatches(self.config.minibatch_size):
+            for batch in buffer.get_minibatches(self.config.minibatch_size, agent.device):
                 logprobs, values, entropy = agent.evaluate_actions(batch.states, batch.actions)
 
                 ratio = torch.exp(logprobs - batch.old_logprobs)
 
                 advantages = batch.advantages
-                advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
 
                 surr1 = ratio * advantages
                 surr2 = torch.clamp(ratio, 1 - self.config.clip, 1 + self.config.clip) * advantages
