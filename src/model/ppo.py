@@ -11,6 +11,10 @@ class PPO:
         self.optimizer = torch.optim.Adam(agent.parameters(), lr=config.lr)
 
     def update(self, agent, buffer):
+        policy_loss_list = []
+        value_loss_list = []
+        entropy_list = []
+
         for epoch in range(self.config.k_epochs):
             for batch in buffer.get_minibatches(self.config.minibatch_size, agent.device):
                 logprobs, values, entropy = agent.evaluate_actions(batch.states, batch.actions)
@@ -37,3 +41,13 @@ class PPO:
                 loss.backward()
                 nn.utils.clip_grad_norm_(agent.parameters(), self.config.max_grad_norm)
                 self.optimizer.step()
+
+                policy_loss_list.append(policy_loss.item())
+                value_loss_list.append(value_loss.item())
+                entropy_list.append(entropy_bonus.item())
+
+        return {
+            "policy_loss": (sum(policy_loss_list) / len(policy_loss_list)),
+            "value_loss": (sum(value_loss_list) / len(value_loss_list)),
+            "entropy": (sum(entropy_list) / len(entropy_list))
+        }

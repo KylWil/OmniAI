@@ -18,7 +18,7 @@ class OmniAI(AIInterface):
     AIInterface: Interface class being inherited from pyftg
     """
     def __init__(self, savedata, randomaction, network, encoder,
-                  update_counter, checkpoint_manager, buffer=None, ppo=None, cfg=None):
+                  update_counter, round_counter, checkpoint_manager, tb_writer=None, buffer=None, ppo=None, cfg=None):
         super().__init__()
         self.blind = True
         self.savedata = savedata
@@ -26,10 +26,12 @@ class OmniAI(AIInterface):
         self.network = network
         self.encoder = encoder
         self.update_counter = update_counter
+        self.round_counter = round_counter
         self.checkpoint_manager = checkpoint_manager
         self.buffer = buffer
         self.ppo = ppo
         self.cfg = cfg
+        self.tb_writer = tb_writer
 
     def name(self) -> str:
         return self.__class__.__name__
@@ -113,15 +115,31 @@ class OmniAI(AIInterface):
             if self.buffer is not None:
                 self.buffer.set_reward(round_end_reward, True)
             log.info("Round end reward: %s", round_end_reward)
+
+        if self.tb_writer is not None:
+            self.round_counter += 1
+            player_hp = round_result.remaining_hps[self.player_index]
+            opp_hp = round_result.remaining_hps[self.opp_index]
+
+            self.tb_writer.add_scalar("round/win", 1 if player_hp > opp_hp else 0, self.round_counter)
+            self.tb_writer.add_scalar("round/hp_diff", player_hp - opp_hp, self.round_counter)
+            self.tb_writer.flush()
+
         if self.ppo is not None and len(self.buffer) >= self.cfg.n_steps:
             self.buffer.compute_gae(self.cfg.gamma, self.cfg.lam)
-            self.ppo.update(self.network, self.buffer)
+            learning_stats = self.ppo.update(self.network, self.buffer)
+            self.update_counter += 1
+
+            for key, value in learning_stats.items():
+                self.tb_writer.add_scalar(key, value, self.update_counter)
+            self.tb_writer.flush()
+
             self.buffer.clear()
             log.info("Network Updated")
-            self.update_counter += 1
             if self.update_counter % self.cfg.checkpoint_every == 0:
-                self.checkpoint_manager.create_new_checkpoint(self.update_counter, self.network, self.ppo.optimizer)
+                self.checkpoint_manager.create_new_checkpoint(self.update_counter, self.round_counter, self.network, self.ppo.optimizer)
                 log.info("Checkpoint %s saved", self.update_counter)
+            
                 
         self.reward.reset()
         log.info("End of Round: %s", round_result)

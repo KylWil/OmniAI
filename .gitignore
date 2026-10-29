@@ -7,6 +7,7 @@ __pycache__/
 .pytest_cache/
 tests/
 agents/
+runs/
 
 # Files
 conftest.py

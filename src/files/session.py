@@ -11,6 +11,8 @@ import logging
 from src.vars.config import Config
 from src.model.buffer import RolloutBuffer
 from src.model.ppo import PPO
+from pathlib import Path
+from torch.utils import tensorboard
 
 log = logging.getLogger(__name__)
 
@@ -56,12 +58,15 @@ async def run_session(
 
     if checkpoint:
         update_counter = checkpoint.get("count", 0)
+        round_counter = checkpoint.get("rounds", 0)
     else:
         update_counter = 0
+        round_counter = 0
     
     buffer = None
     ppo = None
     cfg = None
+    tb_writer = None
 
     if learn:
         cfg = Config()
@@ -70,9 +75,13 @@ async def run_session(
         if checkpoint is not None:
             ppo.optimizer.load_state_dict(checkpoint["optimizer"])
 
+        runs_folder = Path(__file__).resolve().parent.parent / "runs"
+        runs_folder.mkdir(exist_ok=True, parents=True)
+        tb_writer = tensorboard.SummaryWriter(runs_folder)
 
-    omni_ai = OmniAI(savedata, randomaction, network, encoder, update_counter,
-                     checkpoint_manager, buffer=buffer, ppo=ppo, cfg=cfg)
+
+    omni_ai = OmniAI(savedata, randomaction, network, encoder, update_counter, round_counter,
+                     checkpoint_manager, tb_writer=tb_writer, buffer=buffer, ppo=ppo, cfg=cfg)
 
     gateway.register_ai(p1, omni_ai)
     await gateway.run_game([character, character], [p1, p2], game_number=games)

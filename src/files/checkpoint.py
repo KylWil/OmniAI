@@ -17,12 +17,13 @@ class CheckpointManager():
         latest = max(checkpoints, key=self._checkpoint_number)
         return torch.load(latest, map_location=device)
 
-    def create_new_checkpoint(self, count, network, optimizer):
+    def create_new_checkpoint(self, count, rounds, network, optimizer):
         self.agents_folder.mkdir(parents=True, exist_ok=True)
         save_dict = {
             "network": network.state_dict(),
             "optimizer": optimizer.state_dict(),
-            "count": count
+            "count": count,
+            "rounds": rounds
         }
 
         f = self.agents_folder / f"ckpt_{count}.pt"
