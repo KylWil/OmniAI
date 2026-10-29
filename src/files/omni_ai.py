@@ -17,13 +17,16 @@ class OmniAI(AIInterface):
     Args:
     AIInterface: Interface class being inherited from pyftg
     """
-    def __init__(self, savedata, randomaction, network, encoder, buffer=None, ppo=None, cfg=None):
+    def __init__(self, savedata, randomaction, network, encoder,
+                  update_counter, checkpoint_manager, buffer=None, ppo=None, cfg=None):
         super().__init__()
         self.blind = True
         self.savedata = savedata
         self.randomaction = randomaction
         self.network = network
         self.encoder = encoder
+        self.update_counter = update_counter
+        self.checkpoint_manager = checkpoint_manager
         self.buffer = buffer
         self.ppo = ppo
         self.cfg = cfg
@@ -110,10 +113,16 @@ class OmniAI(AIInterface):
             if self.buffer is not None:
                 self.buffer.set_reward(round_end_reward, True)
             log.info("Round end reward: %s", round_end_reward)
-        if self.ppo is not None and len(self.buffer) > 0:
+        if self.ppo is not None and len(self.buffer) >= self.cfg.n_steps:
             self.buffer.compute_gae(self.cfg.gamma, self.cfg.lam)
             self.ppo.update(self.network, self.buffer)
             self.buffer.clear()
+            log.info("Network Updated")
+            self.update_counter += 1
+            if self.update_counter % self.cfg.checkpoint_every == 0:
+                self.checkpoint_manager.create_new_checkpoint(self.update_counter, self.network, self.ppo.optimizer)
+                log.info("Checkpoint %s saved", self.update_counter)
+                
         self.reward.reset()
         log.info("End of Round: %s", round_result)
 

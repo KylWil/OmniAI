@@ -48,12 +48,17 @@ async def run_session(
     checkpoint_manager = CheckpointManager(p1)
     checkpoint = checkpoint_manager.load_latest_checkpoint(device)
 
-    if checkpoint is not None: network.load_state_dict(checkpoint["model"])
+    if checkpoint is not None: network.load_state_dict(checkpoint["network"])
     else: log.info("No checkpoint found, using untrained network.")
 
     # Warms up GPU library to avoid action delays during play
     network.act(torch.zeros(STATE_DIM))
 
+    if checkpoint:
+        update_counter = checkpoint.get("count", 0)
+    else:
+        update_counter = 0
+    
     buffer = None
     ppo = None
     cfg = None
@@ -62,8 +67,12 @@ async def run_session(
         cfg = Config()
         buffer = RolloutBuffer()
         ppo = PPO(network, cfg)
+        if checkpoint is not None:
+            ppo.optimizer.load_state_dict(checkpoint["optimizer"])
 
-    omni_ai = OmniAI(savedata, randomaction, network, encoder, buffer=buffer, ppo=ppo, cfg=cfg)
+
+    omni_ai = OmniAI(savedata, randomaction, network, encoder, update_counter,
+                     checkpoint_manager, buffer=buffer, ppo=ppo, cfg=cfg)
 
     gateway.register_ai(p1, omni_ai)
     await gateway.run_game([character, character], [p1, p2], game_number=games)

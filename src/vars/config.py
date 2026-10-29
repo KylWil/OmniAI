@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 @dataclass
 class Config:
-    n_steps: int = 4096
+    n_steps: int = 2048
     checkpoint_every: int = 10
     eval_every: int = 10
 

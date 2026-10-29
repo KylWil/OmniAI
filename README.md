@@ -11,7 +11,6 @@ OmniAI is a training environment for the game DareFightingICE. It offers a Proxi
 * [DareFightingICE v7.1](https://github.com/TeamFightingICE/FightingICE/releases/tag/v7.1)
 * [JDK 21](https://www.oracle.com/java/technologies/downloads/#java21)
 * [Python v3.12.13](https://www.python.org/downloads/release/python-31213/)
-* [Ubuntu Linux](https://ubuntu.com/download) (This program was written on Ubuntu Linux, it is unknown whether or not it will run on any other Linux distributions or operating systems)
 
 ### Python Packages
 
@@ -19,9 +18,9 @@ OmniAI is a training environment for the game DareFightingICE. It offers a Proxi
 * pandas v3.0.5
 * pyftg v2.3
 * tensorboard v2.21.0
-* torch v2.13.0+rocm7.2 (AMD GPU)
-* torchaudio v2.11.0+rocm7.2 (AMD GPU)
-* torchvision v0.28.0+rocm7.2 (AMD GPU)
+* torch
+* torchaudio
+* torchvision
 * typer v0.26.8
 
 ### Installing
