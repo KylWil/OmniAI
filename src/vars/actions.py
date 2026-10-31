@@ -42,3 +42,5 @@ ACTIONS = [
     "CROUCH",
     "NEUTRAL"
 ]
+
+ACTIONS_DIM = len(ACTIONS)

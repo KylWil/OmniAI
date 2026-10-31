@@ -1,3 +1,5 @@
+STATE_DIM = 65
+
 CHAR_PARAMS = [
     ("hp", "minmax", {"minval":0, "maxval":400}),
     ("energy", "minmax", {"minval":0, "maxval":300}),

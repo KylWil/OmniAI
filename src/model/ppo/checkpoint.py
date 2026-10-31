@@ -1,10 +1,11 @@
 from pathlib import Path
+
 import torch
 
 class CheckpointManager():
     def __init__(self, agent_name):
         self.agent_name = agent_name
-        self.agents_folder = Path(__file__).resolve().parent.parent / "agents" / agent_name
+        self.agents_folder = Path(__file__).resolve().parent.parent.parent / "agents" / agent_name
 
     def _checkpoint_number(self, path):
         return int(path.stem.split("_")[1])

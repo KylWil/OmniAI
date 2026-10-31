@@ -3,7 +3,6 @@ import torch.nn as nn
 
 from src.vars.config import Config
 
-
 class PPO:
     def __init__(self, agent: nn.Module, config: Config):
         self.agent = agent

@@ -2,11 +2,12 @@ from dataclasses import dataclass
 
 @dataclass
 class Config:
+    character_one = "GARNET"
+    character_two = "GARNET"
+
     n_steps: int = 2048
     checkpoint_every: int = 10
     eval_every: int = 10
-
-    # PPO optimization
     lr: float = 3e-4
     gamma: float = 0.99
     lam: float = 0.95

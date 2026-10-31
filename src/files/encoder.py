@@ -1,6 +1,7 @@
 from pyftg import FrameData
-from src.vars import parameters as param
 import torch
+
+from src.vars import state_parameters as param
 
 class StateEncoder():
     """

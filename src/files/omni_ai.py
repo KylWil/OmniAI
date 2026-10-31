@@ -1,10 +1,11 @@
+import logging
+
 from pyftg import (AIInterface, GameData, FrameData, ScreenData, 
                    AudioData, Key, RoundResult, CommandCenter,)
+
 from src.files.data_center import DataCenter
-from src.vars.actions import ACTIONS
-import logging
-import random
 from src.files.rewards import Reward
+from src.vars.actions import ACTIONS
 
 log = logging.getLogger(__name__)
 
@@ -17,12 +18,11 @@ class OmniAI(AIInterface):
     Args:
     AIInterface: Interface class being inherited from pyftg
     """
-    def __init__(self, savedata, randomaction, network, encoder,
-                  update_counter, round_counter, checkpoint_manager, tb_writer=None, buffer=None, ppo=None, cfg=None):
+    def __init__(self, savedata, network, encoder,
+                  update_counter, round_counter, checkpoint_manager, deterministic, tb_writer=None, buffer=None, ppo=None, cfg=None):
         super().__init__()
         self.blind = True
         self.savedata = savedata
-        self.randomaction = randomaction
         self.network = network
         self.encoder = encoder
         self.update_counter = update_counter
@@ -32,6 +32,8 @@ class OmniAI(AIInterface):
         self.ppo = ppo
         self.cfg = cfg
         self.tb_writer = tb_writer
+        self.game_counter = 1
+        self.deterministic = deterministic
 
     def name(self) -> str:
         return self.__class__.__name__
@@ -96,13 +98,10 @@ class OmniAI(AIInterface):
             if self.buffer is not None and reward is not None:
                 self.buffer.set_reward(reward, False)
 
-            index, logprob, value = self.network.act(state=state)
+            index, logprob, value = self.network.act(state=state, deterministic=self.deterministic)
 
             if self.buffer is not None:
                 self.buffer.add(state, index, logprob, value)
-
-            if reward:
-                log.info("reward: %.3f", reward)
 
             self.cc.command_call(ACTIONS[index])
 
@@ -149,7 +148,8 @@ class OmniAI(AIInterface):
             log.info("Successfully saved data for round on: %s", date)
 
     def game_end(self):
-        log.info("End of Game")
+        log.info("End of Game: %s", self.game_counter)
+        self.game_counter += 1
 
     def close(self):
         pass
