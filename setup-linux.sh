@@ -1,0 +1,161 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(dirname "$0")"
+
+die()  { echo "ERROR: $*" >&2; exit 1; }
+warn() { echo "WARNING: $*" >&2; }
+
+# ---------- Prerequisites (fail fast) ----------
+
+java -version >/dev/null 2>&1 || die "Java not found. Please install Java first."
+[ -f requirements.txt ] || die "requirements.txt not found next to this script."
+command -v curl  >/dev/null 2>&1 || die "curl not found. Install it (e.g. sudo apt install curl)."
+command -v unzip >/dev/null 2>&1 || die "unzip not found. Install it (e.g. sudo apt install unzip)."
+
+if ! command -v uv >/dev/null 2>&1; then
+  echo "Installing uv..."
+  curl -LsSf https://astral.sh/uv/install.sh | sh || die "uv install failed."
+  export PATH="$HOME/.local/bin:$PATH"
+fi
+command -v uv >/dev/null 2>&1 || die "uv not found after install. Restart the terminal and re-run."
+
+# ---------- Python venv (must be 3.12) ----------
+
+PY="$PWD/.venv/bin/python"
+
+if [ -e ".venv" ]; then
+  if ! "$PY" -c 'import sys; sys.exit(sys.version_info[:2] != (3, 12))' >/dev/null 2>&1; then
+    echo "Existing .venv is not a working Python 3.12 environment. Recreating it..."
+    rm -rf .venv
+  fi
+fi
+
+if [ ! -x "$PY" ]; then
+  uv venv --seed --python 3.12 .venv || die "Failed to create venv."
+fi
+
+# ---------- Detect GPU ----------
+# NVIDIA: detected via nvidia-smi; uv's "auto" backend then picks the matching CUDA build.
+# AMD:    uv's "auto" backend only finds AMD GPUs through rocm_agent_enumerator, which
+#         needs the full ROCm toolkit. PyTorch's ROCm wheels don't need that toolkit,
+#         only the amdgpu kernel driver, so we read the GPU architecture straight from
+#         the kernel (/sys/class/kfd) and hand it to uv via UV_AMD_GPU_ARCHITECTURE.
+
+# AMD architectures that PyTorch publishes ROCm builds for.
+#   gfx1030 = RX 6800/6900 | gfx1100-1102 = RX 7000 | gfx1200/1201 = RX 9000
+#   gfx900/906/908/90a/942/950 = Vega / Radeon VII / Instinct
+AMD_SUPPORTED="gfx900 gfx906 gfx908 gfx90a gfx942 gfx950 gfx1030 gfx1100 gfx1101 gfx1102 gfx1200 gfx1201"
+
+AMD_ARCH=""        # first supported AMD GPU found
+AMD_UNSUPPORTED="" # AMD GPU found, but no PyTorch ROCm build for it (e.g. most iGPUs)
+
+detect_amd_arch() {
+  local props v arch
+  for props in /sys/class/kfd/kfd/topology/nodes/*/properties; do
+    [ -r "$props" ] || continue
+    v=$(awk '$1 == "gfx_target_version" { print $2 }' "$props")
+    [ -n "$v" ] && [ "$v" -gt 0 ] || continue   # node 0 is the CPU (version 0)
+    # gfx_target_version encodes major*10000 + minor*100 + stepping (stepping is hex in the name)
+    arch=$(printf 'gfx%d%d%x' $((v / 10000)) $(((v / 100) % 100)) $((v % 100)))
+    case " $AMD_SUPPORTED " in
+      *" $arch "*) [ -z "$AMD_ARCH" ] && AMD_ARCH="$arch" ;;
+      *)           AMD_UNSUPPORTED="$arch" ;;
+    esac
+  done
+}
+
+GPU="cpu"
+if command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi >/dev/null 2>&1; then
+  GPU="nvidia"
+  echo "NVIDIA GPU detected."
+else
+  detect_amd_arch
+  if [ -n "$AMD_ARCH" ]; then
+    GPU="amd"
+    echo "AMD GPU detected ($AMD_ARCH)."
+    export UV_AMD_GPU_ARCHITECTURE="${UV_AMD_GPU_ARCHITECTURE:-$AMD_ARCH}"
+    if [ ! -r /dev/kfd ] || [ ! -w /dev/kfd ]; then
+      warn "Your user can't access /dev/kfd, so PyTorch won't be able to use the GPU yet."
+      warn "Fix with: sudo usermod -aG render,video \"\$USER\"   (then log out and back in)"
+    fi
+  elif [ -n "$AMD_UNSUPPORTED" ]; then
+    warn "AMD GPU found ($AMD_UNSUPPORTED), but PyTorch has no ROCm build for it. Installing CPU torch."
+  elif command -v lspci >/dev/null 2>&1 && lspci | grep -iE 'vga|3d|display' | grep -qiE 'amd|ati'; then
+    warn "An AMD GPU is present but the kernel's GPU compute interface (/sys/class/kfd) isn't available."
+    warn "Make sure the amdgpu driver is loaded. Installing CPU torch for now."
+  fi
+fi
+
+# ---------- Install torch ----------
+# TORCH_BACKEND overrides the detection, e.g.: TORCH_BACKEND=cpu ./setup-linux.sh
+
+BACKEND="${TORCH_BACKEND:-auto}"
+echo "Installing torch (GPU: $GPU, backend: $BACKEND)..."
+if ! uv pip install --python "$PY" torch --torch-backend="$BACKEND"; then
+  [ "$GPU" = "amd" ] && warn "If uv didn't recognize '$UV_AMD_GPU_ARCHITECTURE', update it with: uv self update"
+  die "torch install failed."
+fi
+
+# --torch-backend here too, so a torch pin in requirements.txt can't swap in a different build.
+uv pip install --python "$PY" -r requirements.txt --torch-backend="$BACKEND" || die "Package install failed."
+
+# ---------- Verify torch matches the GPU ----------
+
+TORCH_INFO=$("$PY" -c 'import torch; print(torch.__version__, torch.version.cuda or "-", torch.version.hip or "-")') \
+  || die "torch was installed but can't be imported."
+read -r TORCH_VER TORCH_CUDA TORCH_HIP <<<"$TORCH_INFO"
+echo "Installed torch $TORCH_VER (CUDA: $TORCH_CUDA, ROCm/HIP: $TORCH_HIP)"
+
+TORCH_OK=1
+if [ "$BACKEND" = "auto" ]; then
+  if [ "$GPU" = "nvidia" ] && [ "$TORCH_CUDA" = "-" ]; then
+    TORCH_OK=0; warn "NVIDIA GPU detected, but a non-CUDA torch was installed. Check your NVIDIA driver."
+  elif [ "$GPU" = "amd" ] && [ "$TORCH_HIP" = "-" ]; then
+    TORCH_OK=0; warn "AMD GPU detected, but a non-ROCm torch was installed. Try 'uv self update' and re-run."
+  fi
+fi
+
+# ---------- FightingICE ----------
+
+BASE="https://github.com/TeamFightingICE/FightingICE/releases/download/v7.1"
+
+curl -fL -o "DareFightingICE-7.1.zip" "$BASE/DareFightingICE-7.1.zip" || die "Download failed."
+curl -fL -o "resource-7.1.zip"        "$BASE/resource-7.1.zip"        || die "Download failed."
+
+unzip -oq "DareFightingICE-7.1.zip" || die "Extraction failed."
+mkdir -p "FightingICE7.1"
+unzip -oq "resource-7.1.zip" -d "FightingICE7.1" || die "Extraction failed."
+
+rm -f "DareFightingICE-7.1.zip" "resource-7.1.zip"
+
+cd "FightingICE7.1" || die "FightingICE7.1 folder not found."
+
+case "$(uname -m)" in
+  x86_64|amd64)  ARCH="amd64" ;;
+  aarch64|arm64) ARCH="arm64" ;;
+  *) die "Unsupported CPU architecture: $(uname -m)" ;;
+esac
+
+NATIVES="./lib/lwjgl/natives/linux/$ARCH"
+[ -d "$NATIVES" ] || die "LWJGL natives not found at $NATIVES (this release may not support linux/$ARCH)."
+
+rm -f "run-linux-amd64.sh" "run-macos-arm64.sh" "run-windows-amd64.bat"
+
+CP="FightingICE.jar:./lib/*:./lib/lwjgl/*:$NATIVES/*:./lib/grpc/*"
+
+write_launcher() {  # $1 = filename, $2 = extra args
+  cat > "$1" <<EOF
+#!/usr/bin/env bash
+cd "\$(dirname "\$0")"
+exec java -cp "$CP" Main --limithp 400 400 --grey-bg --pyftg-mode $2
+EOF
+  chmod +x "$1"
+}
+
+write_launcher "run-linux.sh"          ""
+write_launcher "run-linux-headless.sh" "--input-sync --headless-mode"
+
+echo
+echo "Setup complete. Launch with FightingICE7.1/run-linux.sh"
+[ "$TORCH_OK" = 1 ] || warn "torch does not match your GPU; see the warning above."
