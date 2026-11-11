@@ -1,4 +1,8 @@
+import logging
+
 from pathlib import Path
+
+log = logging.getLogger(__name__)
 
 class Config:
     def __init__(self):
@@ -35,15 +39,18 @@ class Config:
                 val = var_line[1].strip().strip("\"'")
 
                 if not hasattr(self, key):
-                    raise AttributeError(f"{key} is an invalid config attribute.")
+                    log.info(f"{key} is an invalid config attribute.") 
+                    continue
 
                 if key == "character_one" or key == "character_two":
                     if not self.valid_characters.__contains__(val):
-                        raise AttributeError(f"{val} is not a valid character. Check config settings.")
+                        log.info(f"{val} is not a valid character. Defaulting to {getattr(self, key)}")
+                        continue
 
                 try:
                     converted = type(getattr(self, key))(val)
                 except ValueError:
-                    raise TypeError(f"Could not convert {val} to {type(getattr(self, key))}.")
+                    log.info(f"Could not convert {val} to {type(getattr(self, key))}. Defauling to {getattr(self, key)}")
+                    continue
 
                 setattr(self, key, converted)
