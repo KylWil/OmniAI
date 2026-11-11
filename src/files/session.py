@@ -52,6 +52,9 @@ async def run_session(
     checkpoint_manager = CheckpointManager(p1)
     checkpoint = checkpoint_manager.load_latest_checkpoint(device)
 
+    log_dir = Path(__file__).parent.parent.parent / "logs"
+    log_dir.mkdir(exist_ok=True)
+
     if checkpoint is not None:
         network.load_state_dict(checkpoint["network"])
         log.info("Checkpoint %s loaded", checkpoint["count"])

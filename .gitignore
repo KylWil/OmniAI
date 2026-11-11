@@ -8,7 +8,9 @@ tests/
 agents/
 runs/
 FightingICE7.1/
-
+logs/
 
 # Files
 todo.md
+test.py
+client.log
