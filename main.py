@@ -1,4 +1,6 @@
 import asyncio
+import logging
+import os
 
 import typer
 from typing_extensions import Annotated, Optional
@@ -7,6 +9,7 @@ from pyftg.utils.logging import DEBUG, set_logging
 from src.files.session import run_session
 
 app = typer.Typer()
+log = logging.getLogger(__name__)
 
 @app.command()
 def start(
@@ -16,7 +19,8 @@ def start(
         savedata: Annotated[Optional[bool], typer.Option(help="Collect and Save Round Data")] = False,
         learn: Annotated[Optional[bool], typer.Option(help="Trains agent's network")] = False,
         deterministic: Annotated[Optional[bool], typer.Option(help="Agent uses determined best move")] = False,
-        nocuda: Annotated[Optional[bool], typer.Option(help="Disables GPU training")] = False):
+        nocuda: Annotated[Optional[bool], typer.Option(help="Disables GPU training")] = False,
+        clients: Annotated[Optional[int], typer.Option(help="Number of parallel training clients")] = 1):
     
     """
     Entry point to launch system. Controls variables through launch parameters.
@@ -24,8 +28,16 @@ def start(
 
     if learn and deterministic:
         raise ValueError("Cannot run with both the learn and deterministic parameters enabled")
+
+    if clients < 1:
+        raise ValueError("Minimum client count is 1")
+
+    max_client_count = max(1, (os.cpu_count() or 2) // 2)
+    if clients > max_client_count:   
+        log.info(f"Your system supports a maximum of {max_client_count} clients. Setting client count to {max_client_count}")
+        clients = max_client_count
     
-    asyncio.run(run_session(a1, a2, games, savedata, learn, deterministic, nocuda))
+    asyncio.run(run_session(a1, a2, games, savedata, learn, deterministic, nocuda, clients))
 
 if __name__ == '__main__':
     set_logging(log_level=DEBUG)

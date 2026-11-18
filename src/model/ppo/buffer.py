@@ -75,3 +75,10 @@ class RolloutBuffer():
 
     def __len__(self):
         return len(self.states)
+
+    def extend(self, other):
+        self.states.extend(other.states)
+        self.actions.extend(other.actions)
+        self.logprobs.extend(other.logprobs)
+        self.advantages.extend(other.advantages)
+        self.returns.extend(other.returns)

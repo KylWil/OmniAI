@@ -18,22 +18,17 @@ class OmniAI(AIInterface):
     Args:
     AIInterface: Interface class being inherited from pyftg
     """
-    def __init__(self, savedata, network, encoder,
-                  update_counter, round_counter, checkpoint_manager, deterministic, tb_writer=None, buffer=None, ppo=None, cfg=None):
+    def __init__(self, learner, encoder, buffer, savedata, deterministic):
         super().__init__()
-        self.blind = True
-        self.savedata = savedata
-        self.network = network
+
+        self.learner = learner
         self.encoder = encoder
-        self.update_counter = update_counter
-        self.round_counter = round_counter
-        self.checkpoint_manager = checkpoint_manager
         self.buffer = buffer
-        self.ppo = ppo
-        self.cfg = cfg
-        self.tb_writer = tb_writer
-        self.game_counter = 1
+        self.savedata = savedata
         self.deterministic = deterministic
+
+        self.game_counter = 1
+        self.blind = True
 
     def name(self) -> str:
         return self.__class__.__name__
@@ -98,7 +93,8 @@ class OmniAI(AIInterface):
             if self.buffer is not None and reward is not None:
                 self.buffer.set_reward(reward, False)
 
-            index, logprob, value = self.network.act(state=state, deterministic=self.deterministic)
+            with self.learner.lock:
+                index, logprob, value = self.learner.network.act(state=state, deterministic=self.deterministic)
 
             if self.buffer is not None:
                 self.buffer.add(state, index, logprob, value)
@@ -115,30 +111,16 @@ class OmniAI(AIInterface):
                 self.buffer.set_reward(round_end_reward, True)
             log.info("Round end reward: %s", round_end_reward)
 
-        if self.tb_writer is not None:
-            self.round_counter += 1
-            player_hp = round_result.remaining_hps[self.player_index]
-            opp_hp = round_result.remaining_hps[self.opp_index]
+        player_hp = round_result.remaining_hps[self.player_index]
+        opp_hp = round_result.remaining_hps[self.opp_index]
 
-            self.tb_writer.add_scalar("round/win", 1 if player_hp > opp_hp else 0, self.round_counter)
-            self.tb_writer.add_scalar("round/hp_diff", player_hp - opp_hp, self.round_counter)
-            self.tb_writer.flush()
+        self.learner.log_round(player_hp, opp_hp)
 
-        if self.ppo is not None and len(self.buffer) >= self.cfg.n_steps:
-            self.buffer.compute_gae(self.cfg.gamma, self.cfg.lam)
-            learning_stats = self.ppo.update(self.network, self.buffer)
-            self.update_counter += 1
-
-            for key, value in learning_stats.items():
-                self.tb_writer.add_scalar(key, value, self.update_counter)
-            self.tb_writer.flush()
-
-            self.buffer.clear()
-            log.info("Network Updated")
-            if self.update_counter % self.cfg.checkpoint_every == 0:
-                self.checkpoint_manager.create_new_checkpoint(self.update_counter, self.round_counter, self.network, self.ppo.optimizer)
-                log.info("Checkpoint %s saved", self.update_counter)
-            
+        if self.buffer is not None:
+            if len(self.buffer) > 0:
+                self.buffer.compute_gae(self.learner.cfg.gamma, self.learner.cfg.lam)
+                self.learner.submit(self.buffer)
+                self.buffer.clear()   
                 
         self.reward.reset()
         log.info("End of Round: %s", round_result)
