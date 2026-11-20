@@ -16,15 +16,19 @@ def start(
         a1: Annotated[Optional[str], typer.Option(help="Player 1 AI")] = "OmniAI",
         a2: Annotated[Optional[str], typer.Option(help="Player 2 AI")] = "MctsAi23i",
         games: Annotated[Optional[int], typer.Option(help="Number of Rounds")] = 1,
-        savedata: Annotated[Optional[bool], typer.Option(help="Collect and Save Round Data")] = False,
+        exportcsv: Annotated[Optional[bool], typer.Option(help="Collect and Save Round Data to a csv file")] = False,
         learn: Annotated[Optional[bool], typer.Option(help="Trains agent's network")] = False,
         deterministic: Annotated[Optional[bool], typer.Option(help="Agent uses determined best move")] = False,
         nocuda: Annotated[Optional[bool], typer.Option(help="Disables GPU training")] = False,
-        clients: Annotated[Optional[int], typer.Option(help="Number of parallel training clients")] = 1):
+        clients: Annotated[Optional[int], typer.Option(help="Number of parallel training clients")] = 1,
+        name: Annotated[Optional[str], typer.Option(help="Your agent's name. Directs output to agent folder")] = None):
     
     """
     Entry point to launch system. Controls variables through launch parameters.
     """
+    if not name:
+        raise typer.BadParameter("You must name your agent when launching. " \
+                                 "Use the same name between sessions to continue training.", param_hint="--name")
 
     if learn and deterministic:
         raise ValueError("Cannot run with both the learn and deterministic parameters enabled")
@@ -36,8 +40,10 @@ def start(
     if clients > max_client_count:   
         log.info(f"Your system supports a maximum of {max_client_count} clients. Setting client count to {max_client_count}")
         clients = max_client_count
+
+    name = name.lower().strip()
     
-    asyncio.run(run_session(a1, a2, games, savedata, learn, deterministic, nocuda, clients))
+    asyncio.run(run_session(a1, a2, games, exportcsv, name, learn, deterministic, nocuda, clients))
 
 if __name__ == '__main__':
     set_logging(log_level=DEBUG)

@@ -8,8 +8,9 @@ class DataCenter():
     """
     Export class that transforms CharacterData information into a CSV.
     """
-    def __init__(self):
+    def __init__(self, agent_folder):
         self.char_history = []
+        self.agent_folder = agent_folder
 
     def add_char_data(self, char_data: CharacterData):
         """
@@ -27,7 +28,7 @@ class DataCenter():
         now = datetime.datetime.now()
         file_prefix = now.strftime("%Y-%m-%d_%H-%M-%S")
 
-        folder_path = Path(__file__).resolve().parent.parent / "round_data" / file_prefix
+        folder_path = self.agent_folder / "round_data"
         folder_path.mkdir(parents=True, exist_ok=True)
 
         file_name = f"{file_prefix}.csv"

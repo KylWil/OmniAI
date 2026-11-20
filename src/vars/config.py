@@ -9,6 +9,10 @@ class Config:
         self.character_one = "GARNET"
         self.character_two = "GARNET"
 
+        self.round_end_scale=1.0
+        self.win_scale=1.0
+        self.loss_scale=1.0
+
         self.n_steps = 2048
         self.checkpoint_every = 10    
         self.minibatch_size = 256
@@ -46,6 +50,14 @@ class Config:
                     if not self.valid_characters.__contains__(val):
                         log.info(f"{val} is not a valid character. Defaulting to {getattr(self, key)}")
                         continue
+
+                if key == "round_end_scale" or key == "win_scale" or key == "loss_scale":
+                    try:
+                        if float(val) < 0 or float(val) > 2:
+                            log.info(f"{key} only accepts values within 0-2 inclusive. Defaulting to {getattr(self, key)}")
+                            continue
+                    except ValueError:
+                        pass    
 
                 try:
                     converted = type(getattr(self, key))(val)

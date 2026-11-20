@@ -9,6 +9,7 @@ from pyftg.socket.aio.gateway import Gateway
 from torch.utils import tensorboard
 
 from src.files.client_manager import ClientManager
+from src.files.data_center import DataCenter
 from src.files.learner import Learner
 from src.files.encoder import StateEncoder
 from src.files.omni_ai import OmniAI
@@ -26,11 +27,12 @@ async def run_session(
                     p1: str,
                     p2: str, 
                     games: int, 
-                    savedata: bool,
+                    exportcsv: bool,
+                    agent_name: str,
                     learn: bool=False,
-                    deterministic: bool=False, 
+                    deterministic: bool=False,
                     nocuda=False,
-                    clients=1):
+                    clients=1,):
     """
     Builds connection and gameplay information and runs a match.
     Requires DareFightingICE to be ran in pyftg mode.
@@ -45,6 +47,9 @@ async def run_session(
     cuda: Use GPU for training
     character: Character to train the agent on
     """
+
+    agent_folder = Path(__file__).parent.parent.parent / "agents" / agent_name
+    data_center = DataCenter(agent_folder)
 
     cfg = Config()
 
@@ -68,11 +73,11 @@ async def run_session(
 
     device = torch.device('cuda' if torch.cuda.is_available() and not nocuda else 'cpu')
     network = ActorCritic(STATE_DIM, ACTIONS_DIM, device)
-    checkpoint_manager = CheckpointManager(p1)
+    checkpoint_manager = CheckpointManager(agent_folder)
     checkpoint = checkpoint_manager.load_latest_checkpoint(device)
 
-    log_dir = Path(__file__).parent.parent.parent / "logs"
-    log_dir.mkdir(exist_ok=True)
+    log_dir = agent_folder / "client_logs"
+    log_dir.mkdir(exist_ok=True, parents=True)
 
     c_manager = ClientManager(learn, log_dir, "127.0.0.1")
 
@@ -102,7 +107,7 @@ async def run_session(
         if checkpoint is not None:
             ppo.optimizer.load_state_dict(checkpoint["optimizer"])
 
-        runs_folder = Path(__file__).resolve().parent.parent / "runs"
+        runs_folder = agent_folder / "tensorboard"
         runs_folder.mkdir(exist_ok=True, parents=True)
         tb_writer = tensorboard.SummaryWriter(runs_folder)
 
@@ -112,7 +117,7 @@ async def run_session(
     ai_controllers = []
 
     for i in range(len(gateways)):
-        ai_controllers.append(OmniAI(learner, encoders[i], buffers[i], savedata, deterministic))
+        ai_controllers.append(OmniAI(learner, encoders[i], buffers[i], exportcsv, deterministic, data_center))
 
     for i in range(len(gateways)):
         gateways[i].register_ai(p1, ai_controllers[i])

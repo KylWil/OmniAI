@@ -18,14 +18,15 @@ class OmniAI(AIInterface):
     Args:
     AIInterface: Interface class being inherited from pyftg
     """
-    def __init__(self, learner, encoder, buffer, savedata, deterministic):
+    def __init__(self, learner, encoder, buffer, exportcsv, deterministic, data_center):
         super().__init__()
 
         self.learner = learner
         self.encoder = encoder
         self.buffer = buffer
-        self.savedata = savedata
+        self.exportcsv = exportcsv
         self.deterministic = deterministic
+        self.data_center = data_center
 
         self.game_counter = 1
         self.blind = True
@@ -39,7 +40,6 @@ class OmniAI(AIInterface):
     def initialize(self, game_data: GameData, player_number: bool):
         log.info("%s Starting..", self.name())
         self.cc = CommandCenter()
-        self.dc = DataCenter()
         self.game_data = game_data
         self.key = Key()
         self.player_num = player_number
@@ -54,8 +54,8 @@ class OmniAI(AIInterface):
         player_max_hp = game_data.max_hps[self.player_index]
         opp_max_hp = game_data.max_hps[self.opp_index]
 
-        self.reward = Reward(self.player_num, player_max_hp, opp_max_hp)
-        log.info("Saving Data: %s", self.savedata)
+        self.reward = Reward(self.player_num, player_max_hp, opp_max_hp, self.learner.cfg)
+        log.info("Exporting Data: %s", self.exportcsv)
 
     def get_non_delay_frame_data(self, frame_data: FrameData):
         self.nd_frame_data = frame_data
@@ -75,8 +75,8 @@ class OmniAI(AIInterface):
         if self.frame_data.empty_flag or self.frame_data.current_frame_number <= 0:
             return
 
-        if self.savedata:
-            self.dc.add_char_data(char_data = self.frame_data.get_character(True))
+        if self.exportcsv:
+            self.data_center.add_char_data(char_data = self.frame_data.get_character(True))
 
         self.encoder.load(self.frame_data)
         self.encoder.process()
@@ -125,8 +125,8 @@ class OmniAI(AIInterface):
         self.reward.reset()
         log.info("End of Round: %s", round_result)
 
-        if self.savedata:
-            date = self.dc.export_data()
+        if self.exportcsv:
+            date = self.data_center.export_data()
             log.info("Successfully saved data for round on: %s", date)
 
     def game_end(self):

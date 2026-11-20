@@ -1,9 +1,10 @@
 class Reward():
-    def __init__(self, player, player_max_hp, opp_max_hp):
+    def __init__(self, player, player_max_hp, opp_max_hp, cfg):
         self.player = player
         self.previous_state = None
         self.player_max_hp = player_max_hp
         self.opp_max_hp = opp_max_hp
+        self.cfg = cfg
 
     def reset(self):
         self.previous_state = None
@@ -46,12 +47,12 @@ class Reward():
 
         taken = (player_hp - prev_player.hp) / self.player_max_hp
         dealt = (prev_opp.hp - opp_hp) / self.opp_max_hp
-        reward = taken + dealt
+        reward = (taken + dealt)*(self.cfg.round_end_scale)
 
         if player_hp > opp_hp:
-            reward += 0.5
+            reward += 0.5*(self.cfg.win_scale)
         elif player_hp < opp_hp:
-            reward -= 0.5
+            reward -= 0.5*(self.cfg.loss_scale)
         else:
             reward -= 0.05
 
