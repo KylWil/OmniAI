@@ -2,7 +2,6 @@ import datetime
 from pathlib import Path
 
 import pandas as pd
-from pyftg.models.character_data import CharacterData
 
 class DataCenter():
     """
@@ -12,7 +11,7 @@ class DataCenter():
         self.char_history = []
         self.agent_folder = agent_folder
 
-    def add_char_data(self, char_data: CharacterData):
+    def add_char_data(self, char_data):
         """
         Appends char_data to class attribute list.
 

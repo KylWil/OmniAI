@@ -1,7 +1,7 @@
 import logging
 import threading
 
-from src.model.ppo.buffer import RolloutBuffer
+from src.files.buffer import RolloutBuffer
 
 log = logging.getLogger(__name__)
 

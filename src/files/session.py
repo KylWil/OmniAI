@@ -3,7 +3,6 @@ import logging
 import os
 from pathlib import Path
 
-import numpy as np
 import torch
 from pyftg.socket.aio.gateway import Gateway
 from torch.utils import tensorboard
@@ -13,10 +12,10 @@ from src.files.data_center import DataCenter
 from src.files.learner import Learner
 from src.files.encoder import StateEncoder
 from src.files.omni_ai import OmniAI
-from src.model.ppo.actor_critic import ActorCritic
-from src.model.ppo.buffer import RolloutBuffer
-from src.model.ppo.checkpoint import CheckpointManager
-from src.model.ppo.ppo import PPO
+from src.files.actor_critic import ActorCritic
+from src.files.buffer import RolloutBuffer
+from src.files.checkpoint import CheckpointManager
+from src.files.ppo import PPO
 from src.vars.actions import ACTIONS_DIM
 from src.vars.config import Config
 from src.vars.state_parameters import STATE_DIM
