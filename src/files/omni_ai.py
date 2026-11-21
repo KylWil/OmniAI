@@ -3,7 +3,6 @@ import logging
 from pyftg import (AIInterface, GameData, FrameData, ScreenData, 
                    AudioData, Key, RoundResult, CommandCenter,)
 
-from src.files.data_center import DataCenter
 from src.files.rewards import Reward
 from src.vars.actions import ACTIONS
 
