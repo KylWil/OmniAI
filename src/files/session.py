@@ -51,6 +51,7 @@ async def run_session(
     data_center = DataCenter(agent_folder)
 
     cfg = Config()
+    encoder = StateEncoder()
 
     host = os.environ.get("SERVER_HOST", "127.0.0.1")
 
@@ -59,12 +60,10 @@ async def run_session(
     ports = [x + port_base for x in port_range]
 
     gateways = []
-    encoders = []
     buffers = []
 
     for port in ports:
         gateways.append(Gateway(host, port))
-        encoders.append(StateEncoder())
         if learn:
             buffers.append(RolloutBuffer())
         else:
@@ -111,12 +110,12 @@ async def run_session(
         tb_writer = tensorboard.SummaryWriter(runs_folder)
 
     learner = Learner(ppo, network, update_counter, round_counter, tb_writer,
-                      checkpoint_manager, cfg)
+                      checkpoint_manager, cfg, encoder)
 
     ai_controllers = []
 
     for i in range(len(gateways)):
-        ai_controllers.append(OmniAI(learner, encoders[i], buffers[i], exportcsv, deterministic, data_center))
+        ai_controllers.append(OmniAI(learner, buffers[i], exportcsv, deterministic, data_center))
 
     for i in range(len(gateways)):
         gateways[i].register_ai(p1, ai_controllers[i])

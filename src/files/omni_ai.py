@@ -17,11 +17,10 @@ class OmniAI(AIInterface):
     Args:
     AIInterface: Interface class being inherited from pyftg
     """
-    def __init__(self, learner, encoder, buffer, exportcsv, deterministic, data_center):
+    def __init__(self, learner, buffer, exportcsv, deterministic, data_center):
         super().__init__()
 
         self.learner = learner
-        self.encoder = encoder
         self.buffer = buffer
         self.exportcsv = exportcsv
         self.deterministic = deterministic
@@ -77,9 +76,7 @@ class OmniAI(AIInterface):
         if self.exportcsv:
             self.data_center.add_char_data(char_data = self.frame_data.get_character(True))
 
-        self.encoder.load(self.frame_data)
-        self.encoder.process()
-        state = self.encoder.to_tensor()
+        state = self.learner.encoder.encode(self.frame_data)
 
         if self.cc.get_skill_flag():
             self.key = self.cc.get_skill_key()

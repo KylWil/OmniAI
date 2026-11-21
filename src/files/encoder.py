@@ -1,4 +1,3 @@
-from pyftg import FrameData
 import torch
 
 from src.vars import state_parameters as param
@@ -34,36 +33,33 @@ class StateEncoder():
                 params.append(self._norm_bool(value))
             elif method == "onehot":
                 params.extend(self._norm_onehot(value, **kwargs))
-        self.state_array.extend(params)
+        return params
 
-    def load(self, frame_data: FrameData):
-        self.char1_data = frame_data.character_data[0].to_dict()
-        self.char2_data = frame_data.character_data[1].to_dict()
-        self.frame_data = frame_data.to_dict()
-        self.state_array = []
-
-    def process(self):
+    def encode(self, frame_data):
         """
         Normalizes the game state values. Changing the order or content of this class
         WILL disable training of an existing model. Updates should be only made for new models.
         """
         # Do not change order or content of normalization if you intend to continue training of an existing model.
 
+        char1_data = frame_data.character_data[0].to_dict()
+        char2_data = frame_data.character_data[1].to_dict()
+        frame_data = frame_data.to_dict()
+        state_array = []
+
         # Character 1 State
-        attack_dict = self.char1_data["attack_data"]
-        self._normalize_data(self.char1_data, param.CHAR_PARAMS)
-        self._normalize_data(attack_dict, param.ATTACK_PARAMS)
-        self._normalize_data(attack_dict["current_hit_area"], param.HIT_AREA_PARAMS)
+        attack_dict = char1_data["attack_data"]
+        state_array.extend(self._normalize_data(char1_data, param.CHAR_PARAMS))
+        state_array.extend(self._normalize_data(attack_dict, param.ATTACK_PARAMS))
+        state_array.extend(self._normalize_data(attack_dict["current_hit_area"], param.HIT_AREA_PARAMS))
 
         # Character 2 State
-        attack_dict = self.char2_data["attack_data"]
-        self._normalize_data(self.char2_data, param.CHAR_PARAMS)
-        self._normalize_data(attack_dict, param.ATTACK_PARAMS)
-        self._normalize_data(attack_dict["current_hit_area"], param.HIT_AREA_PARAMS)
+        attack_dict = char2_data["attack_data"]
+        state_array.extend(self._normalize_data(char2_data, param.CHAR_PARAMS))
+        state_array.extend(self._normalize_data(attack_dict, param.ATTACK_PARAMS))
+        state_array.extend(self._normalize_data(attack_dict["current_hit_area"], param.HIT_AREA_PARAMS))
 
         # Game State
-        self._normalize_data(self.frame_data, param.GAME_PARAMS)
+        state_array.extend(self._normalize_data(frame_data, param.GAME_PARAMS))
 
-    def to_tensor(self):
-        return torch.tensor(self.state_array, dtype=torch.float32)
-    
+        return torch.tensor(state_array, dtype=torch.float32)

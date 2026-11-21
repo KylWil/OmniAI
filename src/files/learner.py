@@ -7,7 +7,7 @@ log = logging.getLogger(__name__)
 
 class Learner():
     def __init__(self, ppo, network, update_counter, 
-                 round_counter, tb_writer, checkpoint_manager, cfg):
+                 round_counter, tb_writer, checkpoint_manager, cfg, encoder):
         self.ppo = ppo
         self.network = network
         self.update_counter = update_counter
@@ -15,6 +15,7 @@ class Learner():
         self.tb_writer = tb_writer
         self.checkpoint_manager = checkpoint_manager
         self.cfg = cfg
+        self.encoder = encoder
 
         self.buffer = RolloutBuffer()
         self.lock = threading.Lock()
